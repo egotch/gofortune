@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+  "flag"
 )
 
 var files []string
@@ -58,6 +59,12 @@ func randomInt(min int, max int)int  {
 // main - main entry point
 func main()  {
 
+  // some command line options...
+  debugPtr := flag.Bool("d", false, "enable verbose logging")
+
+  flag.Parse()
+
+
   // define the command to run
   fortuneCommand := exec.Command("fortune", "-f")
   pipe, err := fortuneCommand.StderrPipe()
@@ -69,7 +76,9 @@ func main()  {
   fortuneCommand.Start()
   outputStream := bufio.NewScanner(pipe)
   outputStream.Scan()
-  log.Println(outputStream.Text())
+  if *debugPtr {
+    log.Println(outputStream.Text())
+  }
 
   // get the path from the returned line
   line := outputStream.Text()
@@ -82,15 +91,19 @@ func main()  {
   }
 
   // log the file contents
-  log.Println("Found", len(files), "files:")
-  for _, v := range files {
-    vSlc := strings.Split(v, "/")
-    log.Println("  >", vSlc[len(vSlc)-1])
+  if *debugPtr {
+    log.Println("Found", len(files), "files:")
+    for _, v := range files {
+      vSlc := strings.Split(v, "/")
+      log.Println("  >", vSlc[len(vSlc)-1])
+    }
   }
 
   // get a random index of a file
   rndIndex := randomInt(0, len(files))
   rndFile := files[rndIndex]
-  log.Println("fetched random file:", rndFile)
+  if *debugPtr{
+    log.Println("fetched random file:", rndFile)
+  }
 }
 
