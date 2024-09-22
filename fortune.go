@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,8 +12,9 @@ import (
 
 var files []string
 
-// visit 
-// searchescurrent path for valid fortunes to store for use later
+// visit - searches provided path for valid fortunes to store for use later
+//
+// filters out "offensive" and unnecessary files (*.dat and symlinks)
 func visit(path string, f os.FileInfo, err error)error  {
   
   if err != nil{
@@ -43,6 +45,16 @@ func visit(path string, f os.FileInfo, err error)error  {
 }
 
 
+// randomInt returns in >= min, < max
+func randomInt(min int, max int)int  {
+
+  rtn := min + rand.Intn(max-min)
+
+  return rtn
+  
+}
+
+
 // main - main entry point
 func main()  {
 
@@ -70,6 +82,15 @@ func main()  {
   }
 
   // log the file contents
-  log.Println(len(files))
+  log.Println("Found", len(files), "files:")
+  for _, v := range files {
+    vSlc := strings.Split(v, "/")
+    log.Println("  >", vSlc[len(vSlc)-1])
+  }
+
+  // get a random index of a file
+  rndIndex := randomInt(0, len(files))
+  rndFile := files[rndIndex]
+  log.Println("fetched random file:", rndFile)
 }
 
