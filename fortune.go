@@ -2,13 +2,15 @@ package main
 
 import (
 	"bufio"
+	"flag"
+	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-  "flag"
 )
 
 var files []string
@@ -59,6 +61,9 @@ func randomInt(min int, max int)int  {
 // main - main entry point
 func main()  {
 
+  // var declarations
+  var quotes []string
+
   // some command line options...
   debugPtr := flag.Bool("d", false, "enable verbose logging")
 
@@ -105,5 +110,28 @@ func main()  {
   if *debugPtr{
     log.Println("fetched random file:", rndFile)
   }
+
+  // fetch a random line from the random file!
+  file, err := os.Open(rndFile)
+  if err != nil{
+    panic(err)
+  }
+
+  defer file.Close()
+
+  lines, err := io.ReadAll(file)
+  if err != nil{
+    panic(err)
+  }
+
+  //quotes = strings.Split(string(lines), "%")
+  tmp_lines := strings.Split(string(lines), "%")
+  quotes = append(quotes, tmp_lines...)
+ 
+  // get a random quote and print it out
+  rndQuote := quotes[randomInt(0, len(quotes))]
+  fmt.Println(rndQuote)
+
+
 }
 
