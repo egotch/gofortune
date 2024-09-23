@@ -13,38 +13,61 @@ import (
 	"strings"
 )
 
-var files []string
 
 // visit - searches provided path for valid fortunes to store for use later
 //
 // filters out "offensive" and unnecessary files (*.dat and symlinks)
-func visit(path string, f os.FileInfo, err error)error  {
+func visit(root string, fortunes bool, literature bool, riddles bool)([]string, error)  {
   
-  if err != nil{
-    log.Fatal(err)
+  var files []string
+
+  // if all flags are false, return anything
+  if ! fortunes && ! literature && ! riddles {
+    fortunes = true
+    literature = true
+    riddles = true
   }
-  // excluded "offensive" fortunes
-  if strings.Contains(path, "/off/"){
+
+  err := filepath.Walk(root, func(path string, f os.FileInfo, err error) error {
+
+    if err != nil{
+      log.Fatal(err)
+    }
+    // excluded "offensive" fortunes
+    if strings.Contains(path, "/off/"){
+      return nil
+    }
+
+    // exclued *.dat files
+    if strings.Contains(path, ".dat"){
+      return nil
+    }
+
+    if strings.Contains(path, ".u8"){
+      return nil
+    }
+
+    // excluded any sub dirs
+    if f.IsDir(){
+      return nil
+    }
+
+    // check if we care about fortunes
+    if strings.Contains(path, "fortune") && fortunes {
+      files = append(files, path)
+    }
+    // check if we care about riddles
+    if strings.Contains(path, "riddle") && riddles {
+      files = append(files, path)
+    }
+    // check if we care about literature
+    if strings.Contains(path, "literature") && literature {
+      files = append(files, path)
+    }
     return nil
-  }
+  })
 
-  // exclued *.dat files
-  if strings.Contains(path, ".dat"){
-    return nil
-  }
-
-  if strings.Contains(path, ".u8"){
-    return nil
-  }
-
-  // excluded any sub dirs
-  if f.IsDir(){
-    return nil
-  }
-
-  files = append(files, path)
-  return nil
-
+  return files, err
 }
 
 
@@ -66,6 +89,10 @@ func main()  {
 
   // some command line options...
   debugPtr := flag.Bool("d", false, "enable verbose logging")
+  frtnPtr := flag.Bool("f", false, "pull from FORTUNES section")
+  rdlPtr := flag.Bool("r", false, "pull lines from the riddles section")
+  litPtr := flag.Bool("l", false, "pull lines from LITERATURE section")
+
 
   flag.Parse()
 
@@ -89,11 +116,7 @@ func main()  {
   line := outputStream.Text()
   root := line[strings.Index(line, "/"):]
 
-  // walk the root dir of the fortunes
-  err = filepath.Walk(root, visit)
-  if err != nil {
-    log.Panic(err)
-  }
+  files, err := visit(root, *frtnPtr, *litPtr, *rdlPtr)
 
   // log the file contents
   if *debugPtr {
